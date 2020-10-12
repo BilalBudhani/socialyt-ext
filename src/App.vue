@@ -3,59 +3,70 @@
     <section v-if="loading">
       <strong>loading...</strong>
     </section>
-    <Profile v-else :user="user" />
+    <component v-bind:is="profileComponent" v-else :data="data" />
   </div>
 </template>
 <script>
-import { createPopper } from '@popperjs/core';
-import axios from "axios";
-import Profile from "./components/Profile";
+import TwitterProfile from "./components/TwitterProfile";
+import GithubProfile from "./components/GithubProfile";
+import { createPopup, fetchTwitterUser, fetchGithubRepo } from "./utils";
 export default {
   components: {
-    Profile
+    TwitterProfile,
+    GithubProfile
   },
   data() {
     return {
       show: false,
       loading: false,
-      user: {}
+      data: {},
+      type: ""
+    }
+  },
+  computed: {
+    profileComponent() {
+      return this.type === "twitter" ? "TwitterProfile" : "GithubProfile";
     }
   },
   methods: {
     fetchUser(targetEl) {
-      const url = new URL(targetEl.href);
       this.loading = true;
-      axios.get(`https://socialyt.bilal.dev/api/twitter/user${url.pathname}`)
-      .then(resp => this.user = resp.data)
+      this.type = "twitter";
+      const url = new URL(targetEl.href);
+      fetchTwitterUser(url.pathname)
+      .then(resp => this.data = resp.data)
+      .finally(() => this.loading = false);
+    },
+    fetchRepo(targetEl) {
+      this.loading = true;
+      this.type = "github";
+      const url = new URL(targetEl.href);
+      fetchGithubRepo(url.pathname)
+      .then(resp => this.data = resp.data)
       .finally(() => this.loading = false);
     },
     cancelClose() {
       clearTimeout(this._timer);
     },
     onMouseLeave() {
-      this._timer = setTimeout(() => {
-        this.show = false;
-        this.user = {};
-        this._popup && this._popup.destroy();
-      }, 800);
+      // this._timer = setTimeout(() => {
+      //   this.show = false;
+      //   this.data = {};
+      //   this._popup && this._popup.destroy();
+      // }, 800);
     },
     onMouseEnter(e) {
       this.cancelClose();
-      this.fetchUser(e.target);
+      if (e.target.href.indexOf('twitter') !== -1) {
+        this.fetchUser(e.target);
+      }
+
+      if (e.target.href.indexOf('github') !== -1) {
+        this.fetchRepo(e.target);
+      }
+
       this.show = true;
-      this.$nextTick(() => {
-        this._popup = createPopper(e.target, this.$refs.profile, {
-          placement: "top",
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [0, 8]
-              }
-            }
-          ]
-        })
-      })
+      this.$nextTick(() => this._popup = createPopup(e.target, this.$refs.profile))
     }
   },
   mounted() {
@@ -65,6 +76,11 @@ export default {
     });
 
     document.querySelectorAll('a[href^="http://twitter.com"]').forEach(el => {
+      el.onmouseenter = this.onMouseEnter
+      el.onmouseleave =  this.onMouseLeave;
+    });
+
+    document.querySelectorAll('a[href^="https://github.com"]').forEach(el => {
       el.onmouseenter = this.onMouseEnter
       el.onmouseleave =  this.onMouseLeave;
     });
