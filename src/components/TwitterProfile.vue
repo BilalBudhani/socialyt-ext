@@ -1,18 +1,18 @@
 <template>
   <section class="profile-section">
     <div class="user-info">
-      <img :src="user.profile_image_url_https" />
+      <img :src="data.profile_image_url_https" />
       <div class="user-details">
-        <strong>{{user.name}}</strong>
-        <span class="screen-name">@{{user.screen_name}}</span>
+        <strong>{{data.name}}</strong>
+        <span class="screen-name">@{{data.screen_name}}</span>
       </div>
     </div>
     <p>
-      {{user.description}}
+      {{data.description}}
     </p>
     <div class="meta-container">
-      <Meta name="Following" :value="user.friends_count" />
-      <Meta name="Followers" :value="user.followers_count" />
+      <Meta name="Following" :value="data.friends_count" />
+      <Meta name="Followers" :value="data.followers_count" />
     </div>
   </section>
 </template>
@@ -20,7 +20,7 @@
 <script>
 import Meta from "./Meta"
 export default {
-  props: ['user'],
+  props: ['data'],
   components: {
     Meta
   }
